@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1d2b">
+<title>Mi Dinero — ¿Cuánto puedo gastar hoy?</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Dinero">
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#081724;color:#f7fbff}body{padding-bottom:88px}.app{width:min(100%,460px);margin:auto;padding:20px 16px}.top{display:grid;grid-template-columns:52px 1fr 44px;align-items:center;gap:10px}.brand{font-size:38px}.top h1{margin:0;font-size:27px}.top p{margin:1px 0 0;font-size:12px;font-weight:800}.icon{background:none;border:0;color:white;font-size:28px}.hero{margin-top:20px;text-align:center;padding:24px 15px;background:linear-gradient(135deg,#08b981,#70df58);border-radius:24px;box-shadow:0 10px 30px #0005}.hero p{font-weight:900;margin:0}.amount{font-size:68px;font-weight:900;letter-spacing:-3px;line-height:1.1}.hero span{display:inline-block;background:#b8f477;color:#08743f;font-weight:900;border-radius:99px;padding:7px 20px}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}.mini,.card,.movements{background:#142d40;border:1px solid #27465b;border-radius:20px}.mini{padding:14px}.mini div{font-size:25px}.mini p{margin:5px 0 0;color:#dce9f1}.mini strong{font-size:23px}.card{overflow:hidden}.cardhead,.row{display:flex;justify-content:space-between;gap:12px;padding:14px 16px}.cardhead{border-bottom:1px solid #29495e}.cardhead span{color:#b9ccda}.row{background:#fff;color:#12212e;border-bottom:1px solid #e8edf1}.row:last-child{border:0}.primary{width:100%;margin:14px 0;background:#1789ff;color:#fff;border:0;border-radius:18px;padding:18px;font-size:18px;font-weight:900;box-shadow:0 8px 20px #0004}.sectiontitle{display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #29495e;font-size:13px}.movements{overflow:hidden}.movement{display:flex;align-items:center;gap:10px;background:#fff;color:#132331;padding:12px 14px;border-bottom:1px solid #e7edf1}.movement:last-child{border:0}.movement .emoji{font-size:24px}.movement .info{flex:1}.movement b,.movement small{display:block}.movement small{color:#71808c}.movement .money{font-weight:900}.empty{padding:22px;text-align:center;color:#a9bdcb}nav{position:fixed;bottom:0;left:0;right:0;height:76px;background:#0c1d2b;border-top:1px solid #294354;display:flex;justify-content:center;z-index:5}nav button{width:min(33.333%,153px);border:0;background:none;color:#8da5b7;font-size:23px}nav span{display:block;font-size:11px;margin-top:3px}.active{color:#28a0ff!important}.modal{position:fixed;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center;z-index:10}.modal.open{display:flex}.sheet{width:min(100%,460px);background:#f7f9fb;color:#132331;border-radius:25px 25px 0 0;padding:10px 18px 22px}.handle{width:48px;height:5px;background:#c4cbd1;border-radius:5px;margin:0 auto 10px}.sheethead{display:flex;justify-content:space-between;align-items:center}.sheethead h2{margin:5px 0 12px}.sheethead button{border:0;background:#e9eef2;border-radius:50%;width:34px;height:34px;font-size:17px}.sheet label{display:block;font-weight:750;margin:12px 0}.sheet input,.sheet select{display:block;width:100%;margin-top:6px;padding:14px;border:1px solid #ccd6dd;border-radius:12px;background:white;font:inherit}.save{margin-bottom:5px}.hint{text-align:center;color:#6e7d88;font-size:12px}.toast{position:fixed;left:50%;bottom:95px;transform:translateX(-50%) translateY(20px);background:#fff;color:#132331;padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;white-space:nowrap;z-index:20;box-shadow:0 8px 30px #0008}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}@media(max-width:360px){.amount{font-size:56px}}
+.actions{display:flex;gap:4px;margin-left:3px}
+.actions button{border:0;background:#eef3f6;border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:15px}
+.actions .delete{background:#fff0f0}
+@media(max-width:390px){.movement{gap:7px;padding:11px 10px}.movement .money{font-size:13px}.actions button{width:31px;height:31px;padding:0}}
+
+/* V0.4 - configuración financiera */
+.settings-card{margin-top:14px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.settings-grid label{font-size:12px;color:#9eb0bf}
+.settings-grid input,.settings-grid select{width:100%;margin-top:6px;background:#0b1d2b;color:#fff;border:1px solid #294155;border-radius:12px;padding:12px}
+.settings-grid label:first-child{grid-column:1/-1}
+.settings-note{font-size:11px;color:#8fa4b5;margin:10px 0 0;line-height:1.4}
+
+
+/* V0.7.1 — modal/formulario accesible en pantallas bajas y móviles */
+.modal{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  align-items:flex-start;
+}
+.modal .sheet,
+.modal .modal-card,
+.modal .dialog,
+.modal > div{
+  max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  margin:auto;
+}
+@supports not (height: 100dvh){
+  .modal .sheet,
+  .modal .modal-card,
+  .modal .dialog,
+  .modal > div{
+    max-height:calc(100vh - 24px);
+  }
+}
+
+
+/* V0.8 — transparencia del cálculo */
+.calc-explain{
+  margin:14px 0 4px;
+  padding:14px 15px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:16px;
+  background:rgba(255,255,255,.045);
+  line-height:1.4;
+}
+.calc-explain b{
+  display:block;
+  margin-bottom:5px;
+  font-size:.82rem;
+}
+.calc-explain span{
+  display:block;
+  color:var(--muted,#9aa7b8);
+  font-size:.78rem;
+}
+.calc-explain strong{color:var(--text,#fff)}
+
+/* V0.9 — captura MSI */
+.msi-fields{display:grid;gap:12px;padding:12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.msi-note,.msi-preview{font-size:.78rem;line-height:1.4;color:var(--muted,#9aa7b8)}
+.msi-preview{padding:10px 12px;border-radius:12px;background:rgba(59,130,246,.09)}
+
+/* V0.10 — métricas del resumen */
+.metric-with-note>span{display:flex;flex-direction:column;gap:2px}
+.metric-with-note small{font-size:.68rem;line-height:1.25;color:var(--muted,#9aa7b8);font-weight:400;max-width:220px}
+.metric-with-note b{white-space:nowrap}
+
+
+/* V0.12 — primera apertura / onboarding */
+[hidden]{display:none!important}
+.welcome-card{margin-top:20px;padding:24px 18px;background:#142d40;border:1px solid #27465b;border-radius:22px;text-align:center}
+.welcome-icon{font-size:42px;margin-bottom:6px}
+.welcome-card h2{margin:6px 0 8px;font-size:22px}
+.welcome-card p{margin:0 auto 8px;max-width:360px;color:#b9ccda;line-height:1.5;font-size:14px}
+.welcome-card .primary{margin-bottom:0}
+
+
+/* V0.14 — identidad visual y desglose mensual */
+.brand{position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center}
+.money-bag{width:42px;height:36px;border-radius:15px 15px 18px 18px;background:linear-gradient(145deg,#ffd85a,#f3a61d);color:#5b3900;font-size:23px;font-weight:950;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 #d8870d,0 5px 14px #0005;transform:translateY(4px)}
+.money-bag:before{content:"";position:absolute;top:2px;width:24px;height:8px;border-radius:8px;background:#ffd85a;border-bottom:3px solid #d8870d}
+.brand-coins{position:absolute;right:-1px;bottom:0;font-size:10px;letter-spacing:-3px;color:#ffd85a;text-shadow:0 1px 0 #b86c00}
+.brand-copy h1{letter-spacing:-.5px}.brand-copy p{color:#b9ccda;letter-spacing:.25px}
+.breakdown-card{margin-top:14px}
+.breakdown-note{margin:0;padding:11px 16px;background:#102638;color:#a9bdcb;font-size:.72rem;line-height:1.35;border-bottom:1px solid #29495e}
+.breakdown-row{padding:13px 16px;background:#fff;color:#12212e;border-bottom:1px solid #e8edf1}
+.breakdown-row:last-child{border-bottom:0}
+.breakdown-main{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.breakdown-category{min-width:0}.breakdown-main strong{white-space:nowrap}
+.breakdown-meta{display:grid;grid-template-columns:38px 1fr;gap:8px;align-items:center;margin-top:8px;color:#71808c;font-size:.72rem}
+.breakdown-track{height:7px;border-radius:99px;background:#e9eef2;overflow:hidden}
+.breakdown-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1789ff,#55c5ff)}
+.breakdown-empty{padding:20px 16px;text-align:center;background:#fff;color:#71808c;font-size:.8rem;line-height:1.45}
+@media(max-width:360px){.top{grid-template-columns:48px 1fr 40px}.top h1{font-size:24px}}
+
+/* V0.15 — navegación por pantallas Inicio / Gastos / Más */
+.view{display:none}.view.active-view{display:block}
+#viewInicio,#viewGastos,#viewMas{animation:viewIn .16s ease-out}@keyframes viewIn{from{opacity:.25;transform:translateY(4px)}to{opacity:1;transform:none}}
+.view-title{margin:20px 2px 10px;font-size:22px}.view-subtitle{margin:-4px 2px 14px;color:#9eb0bf;font-size:13px;line-height:1.45}
+#viewGastos .primary{margin-top:18px}
+#viewMas .settings-card{margin-top:14px}
+nav button{cursor:pointer}nav button.active{color:#28a0ff!important}
+body{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+nav{height:calc(76px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+
+/* V0.15.1 — Inicio compacto: información esencial sin scroll innecesario */
+#viewInicio .hero{margin-top:14px;padding:19px 14px 17px;border-radius:22px}
+#viewInicio .hero p{font-size:.82rem;letter-spacing:.35px}
+#viewInicio .amount{font-size:clamp(50px,15vw,64px);margin:2px 0 4px}
+#viewInicio .hero span{padding:6px 16px;font-size:.78rem}
+#viewInicio .twocol{gap:10px;margin:10px 0}
+#viewInicio .mini{padding:11px 12px;border-radius:17px}
+#viewInicio .mini div{font-size:20px}
+#viewInicio .mini p{font-size:.75rem;margin:2px 0 1px;color:#b9ccda}
+#viewInicio .mini strong{font-size:20px}
+#viewInicio .card{border-radius:17px}
+#viewInicio .cardhead{padding:11px 13px;font-size:.78rem}
+#viewInicio .row{padding:10px 13px;font-size:.82rem;align-items:center}
+#viewInicio .metric-with-note small{font-size:.61rem;max-width:205px}
+#viewInicio .calc-explain{margin:10px 0 0;padding:11px 13px;border-radius:14px}
+#viewInicio .calc-explain b{font-size:.76rem;margin-bottom:3px}
+#viewInicio .calc-explain span{font-size:.70rem}
+@media(max-width:360px){#viewInicio .amount{font-size:48px}#viewInicio .row{padding:9px 11px}}
+
+
+/* V0.15.2 — Gastos compacto y escaneable en móvil */
+#viewGastos .view-title{margin-bottom:6px}
+#viewGastos .view-subtitle{margin-bottom:12px}
+.expense-glance{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 10px}
+.expense-glance>div{background:#10283a;border:1px solid #27465b;border-radius:16px;padding:11px 12px}
+.expense-glance span{display:block;color:#9eb0bf;font-size:.69rem;margin-bottom:2px}
+.expense-glance strong{display:block;font-size:1.02rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewGastos .expense-add{margin:8px 0 12px;padding:15px 16px;border-radius:16px;font-size:16px}
+#viewGastos .movements{border-radius:17px}
+#viewGastos .sectiontitle{padding:11px 13px;font-size:.72rem}
+#viewGastos .movement{padding:11px 12px;gap:9px;align-items:center}
+#viewGastos .movement .emoji{width:34px;height:34px;display:grid;place-items:center;flex:0 0 34px;border-radius:11px;background:#eef5f8;font-size:19px}
+#viewGastos .movement .info{min-width:0}
+#viewGastos .movement .info b{font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewGastos .movement .info small{font-size:.68rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewGastos .movement .info em{display:block;color:#5d7180;font-size:.64rem;font-style:normal;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#viewGastos .movement-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+#viewGastos .movement .money{font-size:.82rem;line-height:1.1}
+#viewGastos .actions{gap:5px;margin:0}
+#viewGastos .actions button{width:29px;height:27px;border-radius:8px;font-size:13px;padding:0}
+#viewGastos .empty{padding:28px 18px;font-size:.8rem;line-height:1.5}
+@media(max-width:360px){#viewGastos .movement{padding:10px 9px;gap:7px}#viewGastos .movement .emoji{width:31px;height:31px;flex-basis:31px}.expense-glance>div{padding:10px}}
+
+/* V0.15.3 — Más: análisis protagonista y configuración compacta */
+#viewMas .view-title{margin-bottom:5px}
+#viewMas .view-subtitle{margin-bottom:12px}
+#viewMas .breakdown-card{margin-top:0;border-radius:18px}
+#viewMas .breakdown-card .cardhead{padding:12px 14px;align-items:center}
+#viewMas .breakdown-card .cardhead strong{font-size:.82rem}
+#viewMas .breakdown-note{padding:9px 14px;font-size:.68rem}
+#viewMas .breakdown-row{padding:11px 14px}
+#viewMas .breakdown-meta{margin-top:6px}
+#viewMas .settings-card{border-radius:18px;overflow:hidden}
+.settings-toggle{width:100%;border:0;background:#142d40;color:#f7fbff;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;font:inherit;text-align:left;cursor:pointer}
+.settings-toggle-copy{min-width:0}
+.settings-toggle-copy strong{display:block;font-size:.82rem}
+.settings-toggle-copy small{display:block;color:#9eb0bf;font-size:.66rem;margin-top:3px;font-weight:500}
+.settings-toggle-side{display:flex;align-items:center;gap:8px;flex:0 0 auto;color:#9eb0bf;font-size:.7rem}
+.settings-chevron{font-size:18px;transition:transform .18s ease}
+.settings-card.open .settings-chevron{transform:rotate(180deg)}
+.settings-body{display:none;border-top:1px solid #29495e;padding:0 14px 12px}
+.settings-card.open .settings-body{display:block}
+#viewMas .settings-grid{gap:9px;margin-top:11px}
+#viewMas .settings-grid input,#viewMas .settings-grid select{padding:11px 12px}
+#viewMas .settings-card .primary{margin:11px 0 7px;padding:14px;font-size:15px;border-radius:15px}
+#viewMas .settings-note{margin:7px 1px 0;font-size:.66rem}
+.more-tip{margin:11px 2px 0;color:#7890a2;font-size:.65rem;text-align:center}
+
+</style>
+</head>
+<body>
+<main class="app">
+<header class="top">
+  <div class="brand" aria-label="Mi Dinero">
+    <span class="money-bag">$</span><span class="brand-coins">●●</span>
+  </div>
+  <div class="brand-copy"><h1>Mi Dinero</h1><p>¿CUÁNTO PUEDO GASTAR HOY?</p></div>
+  <button class="icon" id="reset" title="Borrar gastos guardados">↻</button>
+</header>
+
+<div id="appViews">
+<section class="view active-view" id="viewInicio" data-view="inicio">
+  <section class="welcome-card" id="welcomeCard" hidden>
+    <div class="welcome-icon">👋</div>
+    <h2>Configura tus finanzas para comenzar</h2>
+    <p>Ingresa tu ingreso mensual neto, confirma la fecha y elige tu moneda. Con eso podremos calcular cuánto puedes gastar hoy.</p>
+    <button class="primary" id="startSetup">⚙️ CONFIGURAR AHORA</button>
+  </section>
+  <div id="financialDashboard">
+    <section class="hero"><p>PUEDES GASTAR HOY</p><div class="amount" id="today">$0.00</div><span id="status">🎉 ¡Vas bien este mes!</span></section>
+    <section class="twocol"><article class="mini"><div>💵</div><p>Disponible</p><strong id="available">$0.00</strong></article><article class="mini"><div>📅</div><p>Días restantes</p><strong id="daysRemaining">31</strong></article></section>
+    <section class="card">
+      <div class="cardhead"><strong>🗓️ RESUMEN DEL MES</strong><span id="monthName">Octubre 2026</span></div>
+      <div class="row"><span>🟢 Ingresos</span><b id="incomeDisplay">$0.00</b></div>
+      <div class="row metric-with-note"><span><span>🧾 Total registrado</span><small>Valor total de tus gastos y compras guardadas</small></span><b id="expenses">$0.00</b></div>
+      <div class="row metric-with-note"><span><span>💸 Gastos de este mes</span><small>Gastos normales que corresponden al mes seleccionado</small></span><b id="monthlyExpensesDisplay">$0.00</b></div>
+      <div class="row"><span>💳 Pagos MSI del mes</span><b id="msiDisplay">$0.00</b></div>
+    </section>
+    <div class="calc-explain" id="calcExplain" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="view" id="viewGastos" data-view="gastos">
+  <div id="configuredTools">
+    <h2 class="view-title">🧾 Gastos</h2>
+    <p class="view-subtitle">Registra, consulta, corrige o elimina tus movimientos.</p>
+    <section class="expense-glance">
+      <div><span>🧾 Registrados</span><strong id="expenseCount">0</strong></div>
+      <div><span>💸 Este mes</span><strong id="expenseMonthTotal">$0.00</strong></div>
+    </section>
+    <button class="primary expense-add" id="openForm">＋ AGREGAR GASTO 👀</button>
+    <section class="movements"><div class="sectiontitle"><strong>ÚLTIMOS GASTOS</strong><span id="count"></span></div><div id="movementList"></div></section>
+  </div>
+</section>
+
+<section class="view" id="viewMas" data-view="mas">
+  <h2 class="view-title">••• Más</h2>
+  <p class="view-subtitle">Análisis de tu dinero y configuración financiera.</p>
+  <section class="card breakdown-card" id="breakdownCard">
+    <div class="cardhead"><strong>📊 ¿EN QUÉ SE ME VA EL DINERO?</strong><span id="breakdownTotal">$0.00</span></div>
+    <p class="breakdown-note">Distribución de lo que sale de tu presupuesto este mes, incluyendo MSI.</p><div id="breakdownList"></div>
+  </section>
+  <section class="card settings-card" id="settingsCard">
+    <button class="settings-toggle" id="settingsToggle" type="button" aria-expanded="false">
+      <span class="settings-toggle-copy"><strong>⚙️ CONFIGURACIÓN FINANCIERA</strong><small>Ingreso, fecha de cálculo y moneda</small></span>
+      <span class="settings-toggle-side"><span>V0.15.3</span><span class="settings-chevron">⌄</span></span>
+    </button>
+    <div class="settings-body" id="settingsBody">
+      <div class="settings-grid">
+        <label>Ingreso mensual neto<input id="incomeInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Ej. 18000"></label>
+        <label>Fecha de cálculo<input id="calcDate" type="date"></label>
+        <label>Moneda<select id="currency"><option value="MXN">MXN — Peso mexicano</option><option value="USD">USD — Dólar</option><option value="EUR">EUR — Euro</option><option value="COP">COP — Peso colombiano</option><option value="ARS">ARS — Peso argentino</option><option value="CLP">CLP — Peso chileno</option><option value="PEN">PEN — Sol peruano</option></select></label>
+      </div>
+      <button class="primary" id="saveSettings">GUARDAR CONFIGURACIÓN</button>
+      <p class="settings-note">La fecha de cálculo permite simular el mes. Los MSI y los gastos normales se muestran por separado para evitar doble conteo.</p>
+    </div>
+  </section>
+  <p class="more-tip">Aquí dejamos lo que consultas de vez en cuando; Inicio y Gastos se mantienen limpios.</p>
+</section>
+</div>
+</main>
+
+<nav aria-label="Navegación principal">
+ <button class="active" id="navInicio" data-target="inicio">🏠<span>Inicio</span></button>
+ <button id="navGastos" data-target="gastos">🧾<span>Gastos</span></button>
+ <button id="navMas" data-target="mas">•••<span>Más</span></button>
+</nav>
+
+<div class="modal" id="modal" aria-hidden="true">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="sheethead"><h2>Agregar gasto</h2><button id="close">✕</button></div>
+  <label>Concepto<input id="concept" placeholder="Ej. Café, gasolina..." maxlength="40"></label>
+  <label>Monto<input id="amountInput" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00"></label>
+  <label>Fecha del gasto
+   <input id="expenseDate" type="date">
+  </label>
+  <label>Categoría
+   <select id="category">
+    <option>Alimentación</option><option>Transporte</option><option>Vivienda</option>
+    <option>Servicios</option><option>Entretenimiento</option><option>Compras</option><option>Otros</option>
+   </select>
+  </label>
+  <label>Periodicidad
+   <select id="frequency">
+    <option>Mensual</option>
+    <option>Quincenal</option>
+    <option>Bimestral</option>
+    <option>Ocasional</option>
+   </select>
+  </label>
+  <div id="bimonthlyFields" style="display:none">
+   <label>¿Este gasto se paga este mes?
+    <select id="appliesThisMonth">
+     <option value="SI">Sí</option>
+     <option value="NO">No</option>
+    </select>
+   </label>
+   <div class="msi-note">📅 En gastos bimestrales, indica si el pago corresponde al mes que estás calculando.</div>
+  </div>
+  <label>Tipo de gasto
+   <select id="expenseType">
+    <option>Gasto normal</option>
+    <option>Compra a crédito/MSI</option>
+   </select>
+  </label>
+  <div id="msiFields" class="msi-fields" style="display:none">
+   <div class="msi-note">💳 Para MSI captura el <b>precio total</b> en Monto. La app calculará la mensualidad automáticamente.</div>
+   <label>Número de mensualidades
+    <input id="installments" type="number" min="1" max="60" step="1" inputmode="numeric" value="12">
+   </label>
+   <label>Primera mensualidad
+    <input id="firstPaymentDate" type="date">
+   </label>
+   <div class="msi-preview" id="msiPreview"></div>
+  </div>
+  <button class="primary save" id="save">GUARDAR GASTO</button>
+  <p class="hint">Captura tus gastos y la app actualizará tus cálculos automáticamente.</p>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const key='cpg_demo_v02'; // conserva los gastos ya guardados en V0.3
+const settingsKey='cpg_settings_v04';
+let gastos=JSON.parse(localStorage.getItem(key)||'[]');
+const storedSettings=JSON.parse(localStorage.getItem(settingsKey)||'null');
+const localToday=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
+let isConfigured=!!storedSettings;
+let settings=storedSettings||{income:0,calcDate:localToday(),currency:'MXN'};
+let editingIndex=null;
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:settings.currency||'MXN'}).format(n);
+const emoji={Alimentación:'🍔',Transporte:'🚗',Vivienda:'🏠',Servicios:'💡',Entretenimiento:'🎮',Compras:'🛒',Otros:'🔵'};
+
+function rawTotal(){return gastos.reduce((s,g)=>s+Number(g.amount||0),0)}
+function sameCalcMonth(dateValue){
+ if(!dateValue)return false;
+ const x=new Date(`${String(dateValue).slice(0,10)}T12:00:00`);
+ const c=new Date(`${settings.calcDate}T12:00:00`);
+ return x.getFullYear()===c.getFullYear()&&x.getMonth()===c.getMonth();
+}
+function normalCommitment(g){
+ if((g.expenseType||'Gasto normal')==='Compra a crédito/MSI')return 0;
+ const a=Number(g.amount||0), f=g.frequency||'Ocasional';
+ if(f==='Mensual')return a;
+ if(f==='Quincenal')return a*2;
+ if(f==='Bimestral')return (g.appliesThisMonth||'SI')==='SI'?a:0;
+ if(f==='Ocasional')return sameCalcMonth(g.expenseDate||g.date)?a:0;
+ return 0;
+}
+function monthIndex(dateValue){
+ const d=new Date(`${String(dateValue).slice(0,10)}T12:00:00`);
+ return d.getFullYear()*12+d.getMonth();
+}
+function msiMonthlyAmount(g){
+ const n=Math.max(1,Number(g.installments||1));
+ return Number(g.amount||0)/n;
+}
+function msiAppliesInCalcMonth(g){
+ if((g.expenseType||'Gasto normal')!=='Compra a crédito/MSI')return false;
+ // Legacy MSI records without installment metadata keep V0.8 behavior.
+ if(!g.installments||!g.firstPaymentDate)return true;
+ const start=monthIndex(g.firstPaymentDate);
+ const calc=monthIndex(settings.calcDate);
+ return calc>=start && calc<start+Number(g.installments);
+}
+function msiTotal(){
+ return gastos.reduce((s,g)=>{
+   if((g.expenseType||'Gasto normal')!=='Compra a crédito/MSI')return s;
+   return s+(msiAppliesInCalcMonth(g)?msiMonthlyAmount(g):0);
+ },0);
+}
+function bimonthlyAppliesInCalcMonth(g){
+ if(!g.expenseDate)return (g.appliesThisMonth||'SI')==='SI';
+ const start=monthIndex(g.expenseDate);
+ const calc=monthIndex(settings.calcDate);
+ const diff=calc-start;
+ return diff>=0 && diff%2===0;
+}
+function monthlyExpenseAmount(g){
+ if((g.expenseType||'Gasto normal')==='Compra a crédito/MSI')return 0;
+ const a=Number(g.amount||0), f=g.frequency||'Ocasional';
+ if(f==='Mensual')return a;
+ if(f==='Quincenal')return a*2;
+ if(f==='Bimestral')return (g.appliesThisMonth||'SI')==='SI'?a:0;
+ if(f==='Ocasional')return sameCalcMonth(g.expenseDate||g.date)?a:0;
+ return 0;
+}
+function monthlyExpensesTotal(){return gastos.reduce((s,g)=>s+monthlyExpenseAmount(g),0)}
+function commitmentsTotal(){return gastos.reduce((s,g)=>s+normalCommitment(g),0)}
+function monthlyOutflowByCategory(){
+ const totals={};
+ gastos.forEach(g=>{
+   let amount=0;
+   if((g.expenseType||'Gasto normal')==='Compra a crédito/MSI'){
+     amount=msiAppliesInCalcMonth(g)?msiMonthlyAmount(g):0;
+   }else{
+     amount=monthlyExpenseAmount(g);
+   }
+   if(amount>0){
+     const category=g.category||'Otros';
+     totals[category]=(totals[category]||0)+amount;
+   }
+ });
+ return totals;
+}
+function renderBreakdown(){
+ const list=$('breakdownList'), totalEl=$('breakdownTotal');
+ if(!list||!totalEl)return;
+ const totals=monthlyOutflowByCategory();
+ const entries=Object.entries(totals).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+ const total=entries.reduce((s,[,v])=>s+v,0);
+ totalEl.textContent=fmt(total);
+ if(!entries.length){
+   list.innerHTML='<div class="breakdown-empty">Cuando agregues gastos, aquí verás qué categorías consumen más de tu presupuesto mensual.</div>';
+   return;
+ }
+ list.innerHTML=entries.map(([category,value])=>{
+   const pct=total>0?value/total*100:0;
+   return `<div class="breakdown-row">
+     <div class="breakdown-main"><span class="breakdown-category">${emoji[category]||'🔵'} <b>${esc(category)}</b></span><strong>${fmt(value)}</strong></div>
+     <div class="breakdown-meta"><span>${pct.toLocaleString('es-MX',{maximumFractionDigits:0})}%</span><div class="breakdown-track"><i style="width:${Math.max(2,pct)}%"></i></div></div>
+   </div>`;
+ }).join('');
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function say(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1800)}
+function dateInfo(){
+ const d=new Date(`${settings.calcDate}T12:00:00`);
+ const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+ return {d,last,days:Math.max(1,last-d.getDate()+1)};
+}
+function syncSettingsForm(){
+ $('incomeInput').value=settings.income;
+ $('calcDate').value=settings.calcDate;
+ $('currency').value=settings.currency;
+}
+function formatShortDate(value){
+ if(!value)return 'Sin fecha';
+ const raw=String(value).slice(0,10);
+ const d=new Date(raw+'T12:00:00');
+ if(Number.isNaN(d.getTime()))return raw;
+ return new Intl.DateTimeFormat('es-MX',{day:'numeric',month:'short'}).format(d).replace('.','');
+}
+function render(){
+ $('welcomeCard').hidden=isConfigured;
+ $('financialDashboard').hidden=!isConfigured;
+ $('configuredTools').hidden=!isConfigured;
+ const spent=rawTotal(), monthlyExpenses=monthlyExpensesTotal(), msi=msiTotal();
+ const available=settings.income-monthlyExpenses-msi;
+ const {d,days}=dateInfo();
+ $('available').textContent=fmt(available);
+ $('expenses').textContent=fmt(spent);
+ $('monthlyExpensesDisplay').textContent=fmt(monthlyExpenses);
+ $('msiDisplay').textContent=fmt(msi);
+ renderBreakdown();
+ const explain=$('calcExplain');
+ if(explain){
+   explain.innerHTML=`<b>Así se calcula tu disponible</b><span>${fmt(settings.income)} ingreso − ${fmt(monthlyExpenses)} gastos del mes − ${fmt(msi)} MSI = <strong>${fmt(available)} disponible</strong></span>`;
+ }
+ $('today').textContent=fmt(Math.max(0,available/days));
+ $('daysRemaining').textContent=days;
+ $('incomeDisplay').textContent=fmt(settings.income);
+ $('monthName').textContent=new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'}).format(d).replace(/^./,c=>c.toUpperCase());
+ $('status').textContent=available>=0?'🎉 ¡Vas bien este mes!':'⚠️ Te pasaste del disponible';
+ $('count').textContent=gastos.length?`${gastos.length} guardado${gastos.length===1?'':'s'}`:'';
+ if($('expenseCount')) $('expenseCount').textContent=gastos.length;
+ if($('expenseMonthTotal')) $('expenseMonthTotal').textContent=fmt(monthlyExpenses+msi);
+ $('movementList').innerHTML=gastos.length?gastos.map((g,i)=>`
+   <div class="movement">
+     <div class="emoji">${emoji[g.category]||'🧾'}</div>
+     <div class="info"><b>${esc(g.concept)}</b><small>${esc(g.category)} · ${formatShortDate(g.expenseDate||g.date)}</small><em>${esc(g.expenseType==='Compra a crédito/MSI' ? ((g.installments?g.installments+' MSI · ':'')+fmt(msiMonthlyAmount(g))+'/mes') : (g.frequency||'Ocasional'))}</em></div>
+     <div class="movement-side"><div class="money">${fmt(g.amount)}</div>
+     <div class="actions">
+       <button class="edit" data-i="${i}" title="Editar">✏️</button>
+       <button class="delete" data-i="${i}" title="Eliminar">🗑️</button>
+     </div></div>
+   </div>`).reverse().join(''):'<div class="empty">Todavía no agregas gastos. Usa <b>＋ AGREGAR GASTO</b> para registrar el primero.</div>';
+ document.querySelectorAll('.edit').forEach(b=>b.onclick=()=>editExpense(Number(b.dataset.i)));
+ document.querySelectorAll('.delete').forEach(b=>b.onclick=()=>deleteExpense(Number(b.dataset.i)));
+}
+function openForm(){
+ editingIndex=null; document.querySelector('.sheethead h2').textContent='Agregar gasto'; $('save').textContent='GUARDAR GASTO';
+ $('concept').value=''; $('amountInput').value=''; $('expenseDate').value=settings.calcDate; $('category').value='Alimentación'; $('frequency').value='Ocasional'; $('expenseType').value='Gasto normal'; $('appliesThisMonth').value='SI'; $('installments').value='12'; $('firstPaymentDate').value=settings.calcDate; syncConditionalFields(); $('modal').classList.add('open'); $('concept').focus();
+}
+function editExpense(i){
+ const g=gastos[i]; editingIndex=i; document.querySelector('.sheethead h2').textContent='Editar gasto'; $('save').textContent='GUARDAR CAMBIOS';
+ $('concept').value=g.concept; $('amountInput').value=g.amount; $('expenseDate').value=(g.expenseDate||g.date||settings.calcDate).slice(0,10); $('category').value=g.category; $('frequency').value=g.frequency||'Ocasional'; $('expenseType').value=g.expenseType||'Gasto normal'; $('appliesThisMonth').value=g.appliesThisMonth||'SI'; $('installments').value=g.installments||12; $('firstPaymentDate').value=g.firstPaymentDate||(g.expenseDate||settings.calcDate).slice(0,10); syncConditionalFields(); $('modal').classList.add('open'); $('concept').focus();
+}
+function deleteExpense(i){
+ const g=gastos[i]; if(confirm(`¿Eliminar "${g.concept}" por ${fmt(g.amount)}?`)){gastos.splice(i,1);localStorage.setItem(key,JSON.stringify(gastos));render();say('Gasto eliminado ✓')}
+}
+$('saveSettings').onclick=()=>{
+ const income=Number($('incomeInput').value),calcDate=$('calcDate').value,currency=$('currency').value;
+ if(!Number.isFinite(income)||income<0||!calcDate){say('Revisa ingreso y fecha');return}
+ settings={income,calcDate,currency};isConfigured=true;localStorage.setItem(settingsKey,JSON.stringify(settings));render();say('Configuración guardada ✓');
+};
+function setSettingsOpen(open){const card=$('settingsCard');card.classList.toggle('open',open);$('settingsToggle').setAttribute('aria-expanded',String(open));}
+$('settingsToggle').onclick=()=>setSettingsOpen(!$('settingsCard').classList.contains('open'));
+$('startSetup').onclick=()=>{showView('mas');setSettingsOpen(true);setTimeout(()=>$('incomeInput').focus(),250)};
+$('openForm').onclick=openForm;
+$('close').onclick=()=> $('modal').classList.remove('open');
+$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('open')};
+function syncConditionalFields(){
+ const isMsi=$('expenseType').value==='Compra a crédito/MSI';
+ const isBimonthly=$('frequency').value==='Bimestral' && !isMsi;
+ $('bimonthlyFields').style.display=isBimonthly?'block':'none';
+ $('msiFields').style.display=isMsi?'block':'none';
+ if(isMsi){
+   if(!$('firstPaymentDate').value)$('firstPaymentDate').value=$('expenseDate').value||settings.calcDate;
+   updateMsiPreview();
+ }
+}
+function updateMsiPreview(){
+ if($('expenseType').value!=='Compra a crédito/MSI')return;
+ const total=Number($('amountInput').value||0);
+ const n=Math.max(1,Number($('installments').value||1));
+ $('msiPreview').textContent=total>0?`${fmt(total)} ÷ ${n} = ${fmt(total/n)} al mes`:'Captura el precio total para calcular la mensualidad.';
+}
+$('expenseType').onchange=syncConditionalFields;
+$('frequency').onchange=syncConditionalFields;
+$('amountInput').addEventListener('input',updateMsiPreview);
+$('installments').addEventListener('input',updateMsiPreview);
+$('expenseDate').addEventListener('change',()=>{if(!$('firstPaymentDate').value)$('firstPaymentDate').value=$('expenseDate').value;});
+
+$('save').onclick=()=>{
+ const concept=$('concept').value.trim(), amount=Number($('amountInput').value), category=$('category').value;
+ const expenseDate=$('expenseDate').value||settings.calcDate;
+ const frequency=$('frequency').value, expenseType=$('expenseType').value;
+ const appliesThisMonth=frequency==='Bimestral'&&expenseType!=='Compra a crédito/MSI'?$('appliesThisMonth').value:'SI';
+ const installments=expenseType==='Compra a crédito/MSI'?Math.max(1,Number($('installments').value||1)):null;
+ const firstPaymentDate=expenseType==='Compra a crédito/MSI'?($('firstPaymentDate').value||expenseDate):null;
+ if(!concept||!Number.isFinite(amount)||amount<=0){say('Escribe concepto y monto válido');return}
+ if(expenseType==='Compra a crédito/MSI'&&(!Number.isInteger(installments)||installments<1)){say('Indica un número válido de mensualidades');return}
+ if(editingIndex===null){gastos.push({concept,amount,category,frequency,expenseType,appliesThisMonth,expenseDate,installments,firstPaymentDate,date:new Date().toISOString()});say('Gasto guardado ✓')}
+ else{gastos[editingIndex]={...gastos[editingIndex],concept,amount,category,frequency,expenseType,appliesThisMonth,expenseDate,installments,firstPaymentDate};say('Cambios guardados ✓')}
+ localStorage.setItem(key,JSON.stringify(gastos));$('modal').classList.remove('open');editingIndex=null;render();
+};
+$('reset').onclick=()=>{if(confirm('¿Borrar todos los gastos guardados? Tu configuración financiera se conservará.')){gastos=[];localStorage.removeItem(key);render();say('Gastos eliminados ✓')}};
+function showView(name){
+ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.dataset.view===name));
+ document.querySelectorAll('nav button[data-target]').forEach(b=>b.classList.toggle('active',b.dataset.target===name));
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+$('navInicio').onclick=()=>showView('inicio');
+$('navGastos').onclick=()=>showView('gastos');
+$('navMas').onclick=()=>showView('mas');
+syncSettingsForm();render();
+setSettingsOpen(!isConfigured);
+
+// V0.13: evita cambios accidentales en campos numéricos al usar la rueda del mouse.
+// Conserva escritura manual, teclado numérico móvil y controles normales del formulario.
+['incomeInput','amountInput','installments'].forEach(id=>{
+ const input=$(id);
+ if(input){
+  input.addEventListener('wheel',event=>{
+   if(document.activeElement===input){
+    event.preventDefault();
+   }
+  },{passive:false});
+ }
+});
+
+</script>
+<script>
+// V0.16 — PWA: registra el service worker cuando la app se sirve por HTTPS/localhost.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
