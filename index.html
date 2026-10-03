@@ -190,6 +190,14 @@ nav{height:calc(76px + env(safe-area-inset-bottom));padding-bottom:env(safe-area
 #viewMas .settings-note{margin:7px 1px 0;font-size:.66rem}
 .more-tip{margin:11px 2px 0;color:#7890a2;font-size:.65rem;text-align:center}
 
+.data-card{margin-top:12px}
+.data-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.data-btn{border:1px solid #d7e1e8;background:#fff;border-radius:13px;padding:12px 8px;font:inherit;font-weight:800;color:#173246;cursor:pointer}
+.data-btn:active{transform:scale(.98)}
+.data-note{margin:10px 0 0;color:#7890a2;font-size:.68rem;line-height:1.45}
+@media(max-width:380px){.data-actions{grid-template-columns:1fr}}
+
+
 </style>
 </head>
 <body>
@@ -247,7 +255,7 @@ nav{height:calc(76px + env(safe-area-inset-bottom));padding-bottom:env(safe-area
   <section class="card settings-card" id="settingsCard">
     <button class="settings-toggle" id="settingsToggle" type="button" aria-expanded="false">
       <span class="settings-toggle-copy"><strong>⚙️ CONFIGURACIÓN FINANCIERA</strong><small>Ingreso, fecha de cálculo y moneda</small></span>
-      <span class="settings-toggle-side"><span>V0.15.3</span><span class="settings-chevron">⌄</span></span>
+      <span class="settings-toggle-side"><span>V0.17</span><span class="settings-chevron">⌄</span></span>
     </button>
     <div class="settings-body" id="settingsBody">
       <div class="settings-grid">
@@ -258,6 +266,17 @@ nav{height:calc(76px + env(safe-area-inset-bottom));padding-bottom:env(safe-area
       <button class="primary" id="saveSettings">GUARDAR CONFIGURACIÓN</button>
       <p class="settings-note">La fecha de cálculo permite simular el mes. Los MSI y los gastos normales se muestran por separado para evitar doble conteo.</p>
     </div>
+  </section>
+
+  <section class="card data-card" id="dataCard">
+    <div class="cardhead"><strong>💾 MIS DATOS</strong><span>Respaldo</span></div>
+    <p class="breakdown-note">Guarda una copia de tu configuración y gastos para poder recuperarlos en este u otro dispositivo.</p>
+    <div class="data-actions">
+      <button class="data-btn" id="backupData" type="button">⬇️ CREAR RESPALDO</button>
+      <button class="data-btn" id="restoreData" type="button">⬆️ RESTAURAR RESPALDO</button>
+    </div>
+    <input id="restoreFile" type="file" accept=".json,application/json" hidden>
+    <p class="data-note">El respaldo se descarga como un archivo JSON. Restaurar reemplaza los datos actuales únicamente después de tu confirmación.</p>
   </section>
   <p class="more-tip">Aquí dejamos lo que consultas de vez en cuando; Inicio y Gastos se mantienen limpios.</p>
 </section>
@@ -541,6 +560,57 @@ $('save').onclick=()=>{
  else{gastos[editingIndex]={...gastos[editingIndex],concept,amount,category,frequency,expenseType,appliesThisMonth,expenseDate,installments,firstPaymentDate};say('Cambios guardados ✓')}
  localStorage.setItem(key,JSON.stringify(gastos));$('modal').classList.remove('open');editingIndex=null;render();
 };
+
+function makeBackup(){
+ const payload={
+   app:"Mi Dinero",
+   backupVersion:1,
+   createdAt:new Date().toISOString(),
+   settings:settings,
+   gastos:gastos
+ };
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ const stamp=new Date().toISOString().slice(0,10);
+ a.href=url;a.download=`mi-dinero-respaldo-${stamp}.json`;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ say('Respaldo creado ✓');
+}
+function validBackup(data){
+ return data && data.app==="Mi Dinero" && Number(data.backupVersion)>=1 &&
+        data.settings && typeof data.settings==="object" &&
+        Array.isArray(data.gastos) &&
+        Number.isFinite(Number(data.settings.income)) &&
+        typeof data.settings.calcDate==="string" &&
+        typeof data.settings.currency==="string";
+}
+$('backupData').onclick=makeBackup;
+$('restoreData').onclick=()=>{$('restoreFile').value='';$('restoreFile').click()};
+$('restoreFile').addEventListener('change',async e=>{
+ const file=e.target.files&&e.target.files[0]; if(!file)return;
+ try{
+   const data=JSON.parse(await file.text());
+   if(!validBackup(data)){say('Ese archivo no es un respaldo válido');return}
+   const count=data.gastos.length;
+   if(!confirm(`Se restaurarán ${count} gasto(s) y la configuración guardada. Esto reemplazará los datos actuales. ¿Continuar?`))return;
+   gastos=data.gastos;
+   settings={
+     income:Number(data.settings.income),
+     calcDate:data.settings.calcDate,
+     currency:data.settings.currency
+   };
+   isConfigured=true;
+   localStorage.setItem(key,JSON.stringify(gastos));
+   localStorage.setItem(settingsKey,JSON.stringify(settings));
+   syncSettingsForm();render();setSettingsOpen(false);showView('inicio');
+   say('Respaldo restaurado ✓');
+ }catch(err){
+   say('No se pudo leer el respaldo');
+ }
+});
+
 $('reset').onclick=()=>{if(confirm('¿Borrar todos los gastos guardados? Tu configuración financiera se conservará.')){gastos=[];localStorage.removeItem(key);render();say('Gastos eliminados ✓')}};
 function showView(name){
  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.dataset.view===name));
